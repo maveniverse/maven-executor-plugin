@@ -24,7 +24,7 @@
     <version>52</version>
   </parent>
 
-  <groupId>eu.maveniverse.maven.maven-executor-plugin</groupId>
+  <groupId>eu.maveniverse.maven.executor</groupId>
   <artifactId>maven-executor-plugin</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -36,6 +36,7 @@
     <module>executor-maven3-plugin</module>
     <module>executor-maven4-plugin</module>
     <module>it3</module>
+    <module>it4</module>
   </modules>
 
   <scm>
@@ -62,15 +63,58 @@
     Build time: latest stable Maven and latest Java LTS.
     Run time: "not so old" Maven (3.6.3+) and latest Java LTS.
     -->
-    <maven.compiler.release>8</maven.compiler.release>
-    <requireRuntimeMavenVersion.version>[3.8,)</requireRuntimeMavenVersion.version>
+    <maven.compiler.release>17</maven.compiler.release>
+    <requireRuntimeMavenVersion.version>[3.9,)</requireRuntimeMavenVersion.version>
 
-    <version.maven>3.9.14</version.maven>
+    <version.maven>3.9.15</version.maven>
+    <version.resolver>1.9.27</version.resolver>
     <version.slf4j>1.7.36</version.slf4j>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <!-- Reactor -->
+      <dependency>
+        <groupId>eu.maveniverse.maven.executor</groupId>
+        <artifactId>core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.plugins</groupId>
+        <artifactId>executor-maven3-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.plugins</groupId>
+        <artifactId>executor-maven4-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- Executor -->
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-executor</artifactId>
+        <version>4.0.0-rc-5</version>
+      </dependency>
+
+      <!-- Resolver APIs -->
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-api</artifactId>
+        <version>${version.resolver}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-spi</artifactId>
+        <version>${version.resolver}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-util</artifactId>
+        <version>${version.resolver}</version>
+      </dependency>
+
+      <!-- Maven3 APIs -->
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-plugin-api</artifactId>

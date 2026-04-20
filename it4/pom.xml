@@ -24,7 +24,7 @@
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>it3</artifactId>
+  <artifactId>it4</artifactId>
   <packaging>pom</packaging>
 
   <name>${project.groupId}:${project.artifactId}</name>
@@ -38,7 +38,7 @@
   <dependencies>
     <dependency>
       <groupId>eu.maveniverse.maven.plugins</groupId>
-      <artifactId>executor-maven3-plugin</artifactId>
+      <artifactId>executor-maven4-plugin</artifactId>
     </dependency>
     <dependency>
       <groupId>org.xmlunit</groupId>

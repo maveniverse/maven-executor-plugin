@@ -19,7 +19,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>eu.maveniverse.maven.maven-executor-plugin</groupId>
+    <groupId>eu.maveniverse.maven.executor</groupId>
     <artifactId>maven-executor-plugin</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
@@ -31,6 +31,11 @@
   <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
+    <dependency>
+      <groupId>eu.maveniverse.maven.executor</groupId>
+      <artifactId>core</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
@@ -92,7 +97,7 @@
           <artifactId>maven-plugin-plugin</artifactId>
           <version>${version.maven-plugin-tools}</version>
           <configuration>
-            <goalPrefix>bom-builder</goalPrefix>
+            <goalPrefix>executor4</goalPrefix>
             <requiredMavenVersion>${requireRuntimeMavenVersion.range}</requiredMavenVersion>
             <!-- TODO: https://github.com/apache/maven/issues/11575 -->
             <requiredJavaVersion>[1.8,)</requiredJavaVersion>
