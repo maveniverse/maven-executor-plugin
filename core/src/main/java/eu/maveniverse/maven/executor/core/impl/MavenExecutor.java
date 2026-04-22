@@ -5,15 +5,26 @@ import static java.util.Objects.requireNonNull;
 import eu.maveniverse.maven.executor.core.Environment;
 import eu.maveniverse.maven.executor.core.Executor;
 import eu.maveniverse.maven.executor.core.Invocation;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import org.apache.maven.api.cli.ExecutorRequest;
+import org.apache.maven.cling.executor.embedded.EmbeddedMavenExecutor;
+import org.apache.maven.cling.executor.forked.ForkedMavenExecutor;
 
 public class MavenExecutor implements Executor {
     private final org.apache.maven.api.cli.Executor executor;
     private final Path installationDirectory;
 
-    public MavenExecutor(org.apache.maven.api.cli.Executor executor, Path installationDirectory) {
+    public static MavenExecutor forkedWithMavenInstallation(Path installationDirectory) {
+        return new MavenExecutor(new ForkedMavenExecutor(false), installationDirectory);
+    }
+
+    public static MavenExecutor embeddedWithMavenInstallation(Path installationDirectory) {
+        return new MavenExecutor(new EmbeddedMavenExecutor(true, false), installationDirectory);
+    }
+
+    private MavenExecutor(org.apache.maven.api.cli.Executor executor, Path installationDirectory) {
         this.executor = requireNonNull(executor);
         this.installationDirectory = requireNonNull(installationDirectory);
     }
@@ -25,6 +36,9 @@ public class MavenExecutor implements Executor {
         requireNonNull(environment);
 
         cwd = cwd.toAbsolutePath().normalize();
+        if (!Files.isDirectory(cwd)) {
+            throw new IllegalArgumentException("cwd must be an existing directory");
+        }
 
         HashMap<String, String> env = new HashMap<>();
         environment.environmentVariables().ifPresent(env::putAll);

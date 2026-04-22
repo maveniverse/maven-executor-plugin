@@ -2,6 +2,7 @@ package eu.maveniverse.maven.executor.core;
 
 import static java.util.Objects.requireNonNull;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
@@ -12,7 +13,7 @@ import java.util.Optional;
  */
 public interface Environment {
     /**
-     * The user home directory, never {@code null}.
+     * The user home directory, never {@code null}. It is guaranteed it exists as well.
      */
     Path userHome();
 
@@ -23,7 +24,7 @@ public interface Environment {
     Optional<Map<String, String>> environmentVariables();
 
     /**
-     * Returns the builder with detected user home (Java "user.home" system property).
+     * Returns the builder with detected user home (Java {@code "user.home"} system property).
      */
     static Builder ofCurrentUserHome() {
         return ofUserHome(Path.of(System.getProperty("user.home")));
@@ -41,11 +42,14 @@ public interface Environment {
         private Map<String, String> environmentVariables;
 
         private Builder(Path userHome) {
-            this.userHome = requireNonNull(userHome);
+            this.userHome = requireNonNull(userHome).toAbsolutePath().normalize();
+            if (!Files.isDirectory(this.userHome)) {
+                throw new IllegalArgumentException("userHome must be an existing directory");
+            }
         }
 
         public Environment build() {
-            return new Impl(userHome.toAbsolutePath().normalize(), environmentVariables);
+            return new Impl(userHome, environmentVariables);
         }
 
         public Builder withEnvironmentVariables(Map<String, String> environmentVariables) {

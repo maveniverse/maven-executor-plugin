@@ -15,7 +15,11 @@ import java.util.Map;
 public class DockerExecutor implements Executor {
     private final String mavenVersion;
 
-    public DockerExecutor(String mavenVersion) {
+    public static DockerExecutor withMavenVersion(String mavenVersion) {
+        return new DockerExecutor(mavenVersion);
+    }
+
+    private DockerExecutor(String mavenVersion) {
         this.mavenVersion = requireNonNull(mavenVersion);
     }
 
@@ -26,6 +30,10 @@ public class DockerExecutor implements Executor {
         requireNonNull(environment);
 
         cwd = cwd.toAbsolutePath().normalize();
+        if (!Files.isDirectory(cwd)) {
+            throw new IllegalArgumentException("cwd must be an existing directory");
+        }
+
         try {
             HashMap<String, String> env = new HashMap<>();
             environment.environmentVariables().ifPresent(env::putAll);
