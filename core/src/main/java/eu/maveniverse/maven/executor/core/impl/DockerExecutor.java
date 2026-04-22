@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class DockerExecutor implements Executor {
     private final String mavenVersion;
@@ -24,13 +25,14 @@ public class DockerExecutor implements Executor {
     }
 
     @Override
-    public int execute(Path cwd, Invocation invocation, Environment environment) {
+    public CompletableFuture<Result> execute(Path cwd, Invocation invocation, Environment environment) {
         requireNonNull(cwd);
         requireNonNull(invocation);
         requireNonNull(environment);
 
-        cwd = cwd.toAbsolutePath().normalize();
-        if (!Files.isDirectory(cwd)) {
+        CompletableFuture<Result> result = new CompletableFuture<>();
+        Path normalizedCwd = cwd.toAbsolutePath().normalize();
+        if (!Files.isDirectory(normalizedCwd)) {
             throw new IllegalArgumentException("cwd must be an existing directory");
         }
 
@@ -45,7 +47,7 @@ public class DockerExecutor implements Executor {
             command.add("run");
             command.add("--rm");
             command.add("--name");
-            command.add("my-maven-project");
+            command.add("my-maven-project"); // TODO: this should be based on some input
             command.add("-u");
             command.add(Integer.toString(detectUid(environment.userHome())));
 
@@ -57,7 +59,7 @@ public class DockerExecutor implements Executor {
             command.add("-v");
             command.add(environment.userHome() + ":/var/maven-home/");
             command.add("-v");
-            command.add(cwd.toAbsolutePath() + ":/var/maven-project");
+            command.add(normalizedCwd + ":/var/maven-project");
             command.add("-w");
             command.add("/var/maven-project");
             command.add("maven:" + mavenVersion);
@@ -65,15 +67,20 @@ public class DockerExecutor implements Executor {
             command.add("-Duser.home=/var/maven-home");
             command.addAll(invocation.args());
 
-            return new ProcessBuilder()
-                    .directory(cwd.toFile())
+            new ProcessBuilder()
+                    .directory(normalizedCwd.toFile())
                     .command(command)
                     .inheritIO()
                     .start()
-                    .waitFor();
+                    .onExit()
+                    .thenAccept(p -> {
+                        result.complete(new Result(p.exitValue(), normalizedCwd, invocation, environment));
+                    });
+
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+        return result;
     }
 
     private static int detectUid(Path userHome) throws IOException {

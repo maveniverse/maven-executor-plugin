@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 
 public class DockerExecutorTest {
     @Test
-    void smoke() {
+    void smoke() throws Exception {
         Path cwd = Path.of("target/test-classes/simple-project");
         Invocation invocation =
                 Invocation.ofMvn().withArgs("-V", "clean", "install").build();
         Environment environment = Environment.ofUserHome(cwd).build();
         try (DockerExecutor executor = DockerExecutor.withMavenVersion("3.9.15")) {
-            assertEquals(0, executor.execute(cwd, invocation, environment));
+            assertEquals(0, executor.execute(cwd, invocation, environment).get().exitCode());
         }
     }
 }

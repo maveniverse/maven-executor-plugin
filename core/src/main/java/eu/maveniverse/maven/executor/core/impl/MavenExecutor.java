@@ -8,6 +8,7 @@ import eu.maveniverse.maven.executor.core.Invocation;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 import org.apache.maven.api.cli.ExecutorRequest;
 import org.apache.maven.cling.executor.embedded.EmbeddedMavenExecutor;
 import org.apache.maven.cling.executor.forked.ForkedMavenExecutor;
@@ -30,11 +31,12 @@ public class MavenExecutor implements Executor {
     }
 
     @Override
-    public int execute(Path cwd, Invocation invocation, Environment environment) {
+    public CompletableFuture<Result> execute(Path cwd, Invocation invocation, Environment environment) {
         requireNonNull(cwd);
         requireNonNull(invocation);
         requireNonNull(environment);
 
+        CompletableFuture<Result> result = new CompletableFuture<>();
         cwd = cwd.toAbsolutePath().normalize();
         if (!Files.isDirectory(cwd)) {
             throw new IllegalArgumentException("cwd must be an existing directory");
@@ -44,7 +46,7 @@ public class MavenExecutor implements Executor {
         environment.environmentVariables().ifPresent(env::putAll);
         invocation.environmentVariables().ifPresent(env::putAll);
 
-        return executor.execute(ExecutorRequest.mavenBuilder(installationDirectory)
+        int exitCode = executor.execute(ExecutorRequest.mavenBuilder(installationDirectory)
                 .cwd(cwd)
                 .command(invocation.cmd())
                 .arguments(invocation.args())
@@ -53,6 +55,8 @@ public class MavenExecutor implements Executor {
                 .stdOut(System.out)
                 .stdErr(System.err)
                 .build());
+        result.complete(new Result(exitCode, cwd, invocation, environment));
+        return result;
     }
 
     @Override
