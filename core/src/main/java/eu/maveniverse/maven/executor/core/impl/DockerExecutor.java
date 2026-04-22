@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DockerExecutor implements Executor {
-    private final String dockerImage;
+    private final String mavenVersion;
 
-    public DockerExecutor(String dockerImage) {
-        this.dockerImage = dockerImage;
+    public DockerExecutor(String mavenVersion) {
+        this.mavenVersion = requireNonNull(mavenVersion);
     }
 
     @Override
@@ -31,7 +31,7 @@ public class DockerExecutor implements Executor {
             environment.environmentVariables().ifPresent(env::putAll);
             invocation.environmentVariables().ifPresent(env::putAll);
 
-            env.put("MAVEN_CONFIG", "/var/maven/.m2");
+            env.put("MAVEN_CONFIG", "/var/maven-home/.m2");
 
             ArrayList<String> command = new ArrayList<>();
             command.add("docker");
@@ -48,20 +48,14 @@ public class DockerExecutor implements Executor {
             }
 
             command.add("-v");
-            command.add(environment.userHome() + ":/var/maven/");
-            // if "within" user home, skip this
-            if (!cwd.startsWith(environment.userHome())) {
-                command.add("-v");
-                command.add(cwd.toAbsolutePath() + ":/var/maven/project");
-                command.add("-w");
-                command.add("/var/maven/project");
-            } else {
-                command.add("-w");
-                command.add("/var/maven");
-            }
-            command.add(dockerImage);
+            command.add(environment.userHome() + ":/var/maven-home/");
+            command.add("-v");
+            command.add(cwd.toAbsolutePath() + ":/var/maven-project");
+            command.add("-w");
+            command.add("/var/maven-project");
+            command.add("maven:" + mavenVersion);
             command.add(invocation.cmd());
-            command.add("-Duser.home=/var/maven");
+            command.add("-Duser.home=/var/maven-home");
             command.addAll(invocation.args());
 
             return new ProcessBuilder()
