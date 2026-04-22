@@ -38,7 +38,6 @@ public class DockerExecutor implements Executor {
             HashMap<String, String> env = new HashMap<>();
             environment.environmentVariables().ifPresent(env::putAll);
             invocation.environmentVariables().ifPresent(env::putAll);
-
             env.put("MAVEN_CONFIG", "/var/maven-home/.m2");
 
             ArrayList<String> command = new ArrayList<>();
