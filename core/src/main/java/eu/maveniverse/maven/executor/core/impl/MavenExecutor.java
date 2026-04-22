@@ -52,6 +52,7 @@ public class MavenExecutor implements Executor {
                 .arguments(invocation.args())
                 .userHomeDirectory(environment.userHome())
                 .environmentVariables(env)
+                .skipMavenRc(true)
                 .stdOut(System.out)
                 .stdErr(System.err)
                 .build());
