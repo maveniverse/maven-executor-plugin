@@ -13,9 +13,9 @@ Core module defines API and is "Maven free" in a way, it is completely embeddabl
 Providers modules contains various providers like "executors" are.
 
 Executor providers currently supported:
-* `executor-maven-executor` uses `maven-executor` of Maven 4, that is capable to run Maven builds using Maven 3 and Maven 4 locally on host in "forked" or "embedded" mode.
-* `executor-docker-exer` uses Docker CLI to execute Maven builds using [Docker Maven](https://hub.docker.com/_/maven) images.
-* `executor-testcontainers` uses Testcontainers (Docker) to execute Maven builds using [Docker Maven](https://hub.docker.com/_/maven) images.
+* `executor-maven-executor` uses `maven-executor` of Maven 4, that is capable to run Maven builds using locally installed Maven 3 and Maven 4 on host in "forked" or "embedded" mode.
+* `executor-docker-exe` uses Docker CLI to execute Maven builds using [Docker Maven](https://hub.docker.com/_/maven) images; requires Docker installed.
+* `executor-testcontainers` uses Testcontainers (Docker) to execute Maven builds using [Docker Maven](https://hub.docker.com/_/maven) images; requires Docker installed.
 
 ## Maven 3 Plugin
 
