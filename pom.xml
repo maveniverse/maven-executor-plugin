@@ -33,10 +33,11 @@
 
   <modules>
     <module>core</module>
+    <module>testutils</module>
+    <module>providers</module>
     <module>executor-maven3-plugin</module>
     <module>executor-maven4-plugin</module>
-    <module>it3</module>
-    <module>it4</module>
+    <module>its</module>
   </modules>
 
   <scm>
@@ -79,6 +80,11 @@
       <dependency>
         <groupId>eu.maveniverse.maven.executor</groupId>
         <artifactId>core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.executor</groupId>
+        <artifactId>testutils</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -131,6 +137,13 @@
         <groupId>eu.maveniverse.maven.mima.runtime</groupId>
         <artifactId>standalone-static</artifactId>
         <version>${version.mima}</version>
+      </dependency>
+
+      <!-- Testcontainers -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers</artifactId>
+        <version>2.0.5</version>
       </dependency>
 
       <!-- Script Engine JSR-223 -->
