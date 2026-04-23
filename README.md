@@ -1,8 +1,13 @@
-Maven Executor Plugin
-=====================
+Maven Executor Suite
+====================
 
-A **Maven 3 and Maven 4 (native) plugin** to execute Maven builds. The plugin allows you to execute Maven builds from 
+A **Maven 3 and Maven 4 (native) suite** to execute Maven builds. The plugin allows you to execute Maven builds from 
 within a Maven build, which can be useful for various use cases, such as integration testing.
+
+The main goal of this project is to provide a flexible and extensible framework for executing Maven builds, with 
+support for both Maven 3 and Maven 4. Another major goal is to provide "sensible defaults" for executing Maven builds, 
+like offer **complete isolation from the user or host OS environment**, something that "vanilla" Maven plugins like
+Surefire and Invoker do not provide.
 
 ## Core
 
