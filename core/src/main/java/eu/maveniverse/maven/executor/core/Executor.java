@@ -11,7 +11,7 @@ public interface Executor extends Closeable {
     /**
      * Executes {@link Invocation} in this given {@link Environment} and returns {@link ExecutorResult}.
      * <p>
-     * Whether implementation blocks or executes async, or pools executions, is left to the implementor.
+     * Whether implementation blocks or executes async is left to the implementor.
      *
      * @param cwd The path (must be existing directory) where the working directory for execution is.
      * @param invocation The invocation to execute.

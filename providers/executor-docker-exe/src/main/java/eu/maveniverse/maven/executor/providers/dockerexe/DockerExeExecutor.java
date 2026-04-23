@@ -34,12 +34,14 @@ public class DockerExeExecutor implements Executor {
         requireNonNull(invocation);
         requireNonNull(environment);
 
-        CompletableFuture<ExecutorResult> result = new CompletableFuture<>();
         Path normalizedCwd = cwd.toAbsolutePath().normalize();
         if (!Files.isDirectory(normalizedCwd)) {
             throw new IllegalArgumentException("cwd must be an existing directory");
         }
 
+        CompletableFuture<ExecutorResult> result = new CompletableFuture<>();
+        Path stdOutPath = null;
+        Path stdErrPath = null;
         try {
             HashMap<String, String> env = new HashMap<>();
             environment.environmentVariables().ifPresent(env::putAll);
@@ -50,8 +52,6 @@ public class DockerExeExecutor implements Executor {
             command.add("docker");
             command.add("run");
             command.add("--rm");
-            command.add("--name");
-            command.add("my-maven-project"); // TODO: this should be based on some input
             command.add("-u");
             command.add(Integer.toString(detectUid(environment.userHome())));
 
@@ -71,8 +71,8 @@ public class DockerExeExecutor implements Executor {
             command.add("-Duser.home=/var/maven-home");
             command.addAll(invocation.args());
 
-            Path stdOutPath = Files.createTempFile("docker-executor-stdout-", ".log");
-            Path stdErrPath = Files.createTempFile("docker-executor-stderr-", ".log");
+            stdOutPath = Files.createTempFile("docker-executor-stdout-", ".log");
+            stdErrPath = Files.createTempFile("docker-executor-stderr-", ".log");
             Process process = new ProcessBuilder()
                     .directory(normalizedCwd.toFile())
                     .command(command)
@@ -85,7 +85,18 @@ public class DockerExeExecutor implements Executor {
             String stdErr = Files.readString(stdErrPath);
             result.complete(new ExecutorResult(normalizedCwd, invocation, environment, exitCode, stdOut, stdErr));
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            result.completeExceptionally(e);
+        } finally {
+            try {
+                if (stdOutPath != null) {
+                    Files.deleteIfExists(stdOutPath);
+                }
+                if (stdErrPath != null) {
+                    Files.deleteIfExists(stdErrPath);
+                }
+            } catch (IOException e) {
+                // ignore
+            }
         }
         return result;
     }

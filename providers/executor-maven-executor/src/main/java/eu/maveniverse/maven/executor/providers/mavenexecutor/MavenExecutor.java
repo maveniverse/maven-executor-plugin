@@ -42,30 +42,34 @@ public class MavenExecutor implements Executor {
         requireNonNull(invocation);
         requireNonNull(environment);
 
-        CompletableFuture<ExecutorResult> result = new CompletableFuture<>();
         cwd = cwd.toAbsolutePath().normalize();
         if (!Files.isDirectory(cwd)) {
             throw new IllegalArgumentException("cwd must be an existing directory");
         }
 
-        HashMap<String, String> env = new HashMap<>();
-        environment.environmentVariables().ifPresent(env::putAll);
-        invocation.environmentVariables().ifPresent(env::putAll);
+        CompletableFuture<ExecutorResult> result = new CompletableFuture<>();
+        try {
+            HashMap<String, String> env = new HashMap<>();
+            environment.environmentVariables().ifPresent(env::putAll);
+            invocation.environmentVariables().ifPresent(env::putAll);
 
-        ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
-        ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
-        int exitCode = executor.execute(ExecutorRequest.mavenBuilder(installationDirectory)
-                .cwd(cwd)
-                .command(invocation.cmd())
-                .arguments(invocation.args())
-                .userHomeDirectory(environment.userHome())
-                .environmentVariables(env)
-                .skipMavenRc(true)
-                .stdOut(stdOut)
-                .stdErr(stdErr)
-                .build());
-        result.complete(
-                new ExecutorResult(cwd, invocation, environment, exitCode, stdOut.toString(), stdErr.toString()));
+            ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
+            ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
+            int exitCode = executor.execute(ExecutorRequest.mavenBuilder(installationDirectory)
+                    .cwd(cwd)
+                    .command(invocation.cmd())
+                    .arguments(invocation.args())
+                    .userHomeDirectory(environment.userHome())
+                    .environmentVariables(env)
+                    .skipMavenRc(true)
+                    .stdOut(stdOut)
+                    .stdErr(stdErr)
+                    .build());
+            result.complete(
+                    new ExecutorResult(cwd, invocation, environment, exitCode, stdOut.toString(), stdErr.toString()));
+        } catch (Exception e) {
+            result.completeExceptionally(e);
+        }
         return result;
     }
 

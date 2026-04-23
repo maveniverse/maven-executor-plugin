@@ -41,12 +41,12 @@ public class TestContainersExecutor implements Executor {
         requireNonNull(invocation);
         requireNonNull(environment);
 
-        CompletableFuture<ExecutorResult> result = new CompletableFuture<>();
         Path normalizedCwd = cwd.toAbsolutePath().normalize();
         if (!Files.isDirectory(normalizedCwd)) {
             throw new IllegalArgumentException("cwd must be an existing directory");
         }
 
+        CompletableFuture<ExecutorResult> result = new CompletableFuture<>();
         HashMap<String, String> env = new HashMap<>();
         environment.environmentVariables().ifPresent(env::putAll);
         invocation.environmentVariables().ifPresent(env::putAll);
@@ -58,16 +58,17 @@ public class TestContainersExecutor implements Executor {
         command.addAll(invocation.args());
 
         MemoizingOneShotStartupCheckStrategy startupCheckStrategy = new MemoizingOneShotStartupCheckStrategy();
-        try (GenericContainer<?> container = new GenericContainer<>(DockerImageName.parse("maven:" + mavenVersion))
-                .withFileSystemBind(environment.userHome().toString(), "/var/maven-home/")
-                .withFileSystemBind(normalizedCwd.toString(), "/var/maven-project")
-                .withWorkingDirectory("/var/maven-project")
-                .withStartupCheckStrategy(startupCheckStrategy)
-                .withCommand(command.toArray(new String[0]))
-                .withCreateContainerCmdModifier(
-                        cmd -> cmd.withUser(Integer.toString(detectUid(environment.userHome()))))
-                .withEnv(env)) {
-            container.start();
+        try (GenericContainer<?> container = new GenericContainer<>(DockerImageName.parse("maven:" + mavenVersion))) {
+            container
+                    .withFileSystemBind(environment.userHome().toString(), "/var/maven-home/")
+                    .withFileSystemBind(normalizedCwd.toString(), "/var/maven-project")
+                    .withWorkingDirectory("/var/maven-project")
+                    .withStartupCheckStrategy(startupCheckStrategy)
+                    .withCommand(command.toArray(new String[0]))
+                    .withCreateContainerCmdModifier(
+                            cmd -> cmd.withUser(Integer.toString(detectUid(environment.userHome()))))
+                    .withEnv(env)
+                    .start();
 
             result.complete(new ExecutorResult(
                     cwd,
@@ -76,6 +77,8 @@ public class TestContainersExecutor implements Executor {
                     startupCheckStrategy.lastStatus.get() == StartupCheckStrategy.StartupStatus.SUCCESSFUL ? 0 : 1,
                     container.getLogs(OutputFrame.OutputType.STDOUT),
                     container.getLogs(OutputFrame.OutputType.STDERR)));
+        } catch (Exception e) {
+            result.completeExceptionally(e);
         }
         return result;
     }
