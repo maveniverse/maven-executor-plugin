@@ -2,15 +2,13 @@ package eu.maveniverse.maven.executor.providers.mavenexecutor;
 
 import static java.util.Objects.requireNonNull;
 
-import eu.maveniverse.maven.executor.core.Environment;
 import eu.maveniverse.maven.executor.core.Executor;
 import eu.maveniverse.maven.executor.core.ExecutorResult;
-import eu.maveniverse.maven.executor.core.Invocation;
 import java.io.ByteArrayOutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import org.apache.maven.api.cli.ExecutorException;
 import org.apache.maven.api.cli.ExecutorRequest;
 import org.apache.maven.cling.executor.embedded.EmbeddedMavenExecutor;
 import org.apache.maven.cling.executor.forked.ForkedMavenExecutor;
@@ -37,40 +35,30 @@ public class MavenExecutor implements Executor {
     }
 
     @Override
-    public CompletableFuture<ExecutorResult> execute(Path cwd, Invocation invocation, Environment environment) {
-        requireNonNull(cwd);
-        requireNonNull(invocation);
-        requireNonNull(environment);
-
-        cwd = cwd.toAbsolutePath().normalize();
-        if (!Files.isDirectory(cwd)) {
-            throw new IllegalArgumentException("cwd must be an existing directory");
-        }
-
-        CompletableFuture<ExecutorResult> result = new CompletableFuture<>();
+    public ExecutorResult execute(eu.maveniverse.maven.executor.core.ExecutorRequest request)
+            throws ExecutionException {
+        requireNonNull(request);
         try {
             HashMap<String, String> env = new HashMap<>();
-            environment.environmentVariables().ifPresent(env::putAll);
-            invocation.environmentVariables().ifPresent(env::putAll);
+            request.environment().environmentVariables().ifPresent(env::putAll);
+            request.invocation().environmentVariables().ifPresent(env::putAll);
 
             ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
             ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
             int exitCode = executor.execute(ExecutorRequest.mavenBuilder(installationDirectory)
-                    .cwd(cwd)
-                    .command(invocation.cmd())
-                    .arguments(invocation.args())
-                    .userHomeDirectory(environment.userHome())
+                    .cwd(request.cwd())
+                    .command(request.invocation().cmd())
+                    .arguments(request.invocation().args())
+                    .userHomeDirectory(request.environment().userHome())
                     .environmentVariables(env)
                     .skipMavenRc(true)
                     .stdOut(stdOut)
                     .stdErr(stdErr)
                     .build());
-            result.complete(
-                    new ExecutorResult(cwd, invocation, environment, exitCode, stdOut.toString(), stdErr.toString()));
-        } catch (Exception e) {
-            result.completeExceptionally(e);
+            return new ExecutorResult(request, exitCode, stdOut.toString(), stdErr.toString());
+        } catch (ExecutorException e) {
+            throw new ExecutionException(e);
         }
-        return result;
     }
 
     @Override

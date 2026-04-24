@@ -1,8 +1,7 @@
 package eu.maveniverse.maven.executor.core;
 
 import java.io.Closeable;
-import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * The executor to execute {@link Invocation} in {@link Environment}.
@@ -13,10 +12,10 @@ public interface Executor extends Closeable {
      * <p>
      * Whether implementation blocks or executes async is left to the implementor.
      *
-     * @param cwd The path (must be existing directory) where the working directory for execution is.
-     * @param invocation The invocation to execute.
-     * @param environment The environment to apply.
+     * @param request The {@link ExecutorRequest}, may not be {@code null}.
+     * @throws ExecutionException In case of failure during execution.
+     * @throws InterruptedException In case execution got interrupted.
      * @return The future of {@link ExecutorResult} of the execution.
      */
-    CompletableFuture<ExecutorResult> execute(Path cwd, Invocation invocation, Environment environment);
+    ExecutorResult execute(ExecutorRequest request) throws ExecutionException, InterruptedException;
 }

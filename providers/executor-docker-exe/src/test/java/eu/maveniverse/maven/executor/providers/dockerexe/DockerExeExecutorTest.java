@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.maveniverse.maven.executor.core.Environment;
+import eu.maveniverse.maven.executor.core.ExecutorRequest;
 import eu.maveniverse.maven.executor.core.ExecutorResult;
 import eu.maveniverse.maven.executor.core.Invocation;
 import eu.maveniverse.maven.executor.testutils.TestProjects;
@@ -19,8 +20,10 @@ public class DockerExeExecutorTest {
                 Invocation.ofMvn().withArgs("-V", "clean", "install").build();
         Environment environment = Environment.ofUserHome(cwd).build();
         try (DockerExeExecutor executor = DockerExeExecutor.withMavenVersion("3.9.15")) {
-            ExecutorResult result =
-                    executor.execute(cwd, invocation, environment).get();
+            ExecutorResult result = executor.execute(ExecutorRequest.ofCwd(cwd)
+                    .withEnvironment(environment)
+                    .withInvocation(invocation)
+                    .build());
             assertEquals(0, result.exitCode());
             assertTrue(result.getStdOut().contains("[INFO] BUILD SUCCESS"));
         }

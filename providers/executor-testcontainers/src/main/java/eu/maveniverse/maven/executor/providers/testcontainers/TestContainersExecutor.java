@@ -3,17 +3,16 @@ package eu.maveniverse.maven.executor.providers.testcontainers;
 import static java.util.Objects.requireNonNull;
 
 import com.github.dockerjava.api.DockerClient;
-import eu.maveniverse.maven.executor.core.Environment;
 import eu.maveniverse.maven.executor.core.Executor;
+import eu.maveniverse.maven.executor.core.ExecutorRequest;
 import eu.maveniverse.maven.executor.core.ExecutorResult;
-import eu.maveniverse.maven.executor.core.Invocation;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.OutputFrame;
@@ -35,52 +34,42 @@ public class TestContainersExecutor implements Executor {
         this.mavenVersion = requireNonNull(mavenVersion);
     }
 
+    /**
+     * Note: Testcontainers uses Lombok {@code @Sneakythrows}.
+     */
     @Override
-    public CompletableFuture<ExecutorResult> execute(Path cwd, Invocation invocation, Environment environment) {
-        requireNonNull(cwd);
-        requireNonNull(invocation);
-        requireNonNull(environment);
+    public ExecutorResult execute(ExecutorRequest request) throws ExecutionException, InterruptedException {
+        requireNonNull(request);
 
-        Path normalizedCwd = cwd.toAbsolutePath().normalize();
-        if (!Files.isDirectory(normalizedCwd)) {
-            throw new IllegalArgumentException("cwd must be an existing directory");
-        }
-
-        CompletableFuture<ExecutorResult> result = new CompletableFuture<>();
         HashMap<String, String> env = new HashMap<>();
-        environment.environmentVariables().ifPresent(env::putAll);
-        invocation.environmentVariables().ifPresent(env::putAll);
+        request.environment().environmentVariables().ifPresent(env::putAll);
+        request.invocation().environmentVariables().ifPresent(env::putAll);
         env.put("MAVEN_CONFIG", "/var/maven-home/.m2");
 
         ArrayList<String> command = new ArrayList<>();
-        command.add(invocation.cmd());
+        command.add(request.invocation().cmd());
         command.add("-Duser.home=/var/maven-home");
-        command.addAll(invocation.args());
+        command.addAll(request.invocation().args());
 
         MemoizingOneShotStartupCheckStrategy startupCheckStrategy = new MemoizingOneShotStartupCheckStrategy();
         try (GenericContainer<?> container = new GenericContainer<>(DockerImageName.parse("maven:" + mavenVersion))) {
             container
-                    .withFileSystemBind(environment.userHome().toString(), "/var/maven-home/")
-                    .withFileSystemBind(normalizedCwd.toString(), "/var/maven-project")
+                    .withFileSystemBind(request.environment().userHome().toString(), "/var/maven-home/")
+                    .withFileSystemBind(request.cwd().toString(), "/var/maven-project")
                     .withWorkingDirectory("/var/maven-project")
                     .withStartupCheckStrategy(startupCheckStrategy)
                     .withCommand(command.toArray(new String[0]))
-                    .withCreateContainerCmdModifier(
-                            cmd -> cmd.withUser(Integer.toString(detectUid(environment.userHome()))))
+                    .withCreateContainerCmdModifier(cmd -> cmd.withUser(
+                            Integer.toString(detectUid(request.environment().userHome()))))
                     .withEnv(env)
                     .start();
 
-            result.complete(new ExecutorResult(
-                    cwd,
-                    invocation,
-                    environment,
+            return new ExecutorResult(
+                    request,
                     startupCheckStrategy.lastStatus.get() == StartupCheckStrategy.StartupStatus.SUCCESSFUL ? 0 : 1,
                     container.getLogs(OutputFrame.OutputType.STDOUT),
-                    container.getLogs(OutputFrame.OutputType.STDERR)));
-        } catch (Exception e) {
-            result.completeExceptionally(e);
+                    container.getLogs(OutputFrame.OutputType.STDERR));
         }
-        return result;
     }
 
     private static int detectUid(Path userHome) {

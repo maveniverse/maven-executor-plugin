@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.maveniverse.maven.executor.core.Environment;
+import eu.maveniverse.maven.executor.core.ExecutorRequest;
 import eu.maveniverse.maven.executor.core.ExecutorResult;
 import eu.maveniverse.maven.executor.core.Invocation;
 import eu.maveniverse.maven.executor.testutils.TestProjects;
@@ -20,8 +21,10 @@ public class MavenExecutorTest {
                 Invocation.ofMvn().withArgs("-V", "clean", "install").build();
         Environment environment = Environment.ofUserHome(cwd).build();
         try (MavenExecutor executor = me.apply(Path.of(System.getProperty("maven.home")))) {
-            ExecutorResult result =
-                    executor.execute(cwd, invocation, environment).get();
+            ExecutorResult result = executor.execute(ExecutorRequest.ofCwd(cwd)
+                    .withEnvironment(environment)
+                    .withInvocation(invocation)
+                    .build());
             assertEquals(0, result.exitCode());
             assertTrue(stripAnsi(result.getStdOut()).contains("[INFO] BUILD SUCCESS"));
         }

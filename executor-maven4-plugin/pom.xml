@@ -20,7 +20,7 @@
 
   <parent>
     <groupId>eu.maveniverse.maven.executor</groupId>
-    <artifactId>maven-executor-plugin</artifactId>
+    <artifactId>maven-executor-suite</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 

@@ -5,36 +5,35 @@ import static java.util.Objects.requireNonNull;
 import java.nio.file.Path;
 
 /**
- * Execution results.
+ * Executor results.
  */
 public class ExecutorResult {
-    private final Path cwd;
-    private final Invocation invocation;
-    private final Environment environment;
+    private final ExecutorRequest request;
     private final int exitCode;
     private final String stdOut;
     private final String stdErr;
 
-    public ExecutorResult(
-            Path cwd, Invocation invocation, Environment environment, int exitCode, String stdOut, String stdErr) {
-        this.cwd = requireNonNull(cwd);
-        this.invocation = requireNonNull(invocation);
-        this.environment = requireNonNull(environment);
+    public ExecutorResult(ExecutorRequest request, int exitCode, String stdOut, String stdErr) {
+        this.request = requireNonNull(request);
         this.exitCode = exitCode;
         this.stdOut = stdOut;
         this.stdErr = stdErr;
     }
 
     public Path cwd() {
-        return cwd;
+        return request.cwd();
     }
 
     public Invocation invocation() {
-        return invocation;
+        return request.invocation();
     }
 
     public Environment environment() {
-        return environment;
+        return request.environment();
+    }
+
+    public ExecutorRequest request() {
+        return request;
     }
 
     public int exitCode() {
